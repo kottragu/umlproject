@@ -7,8 +7,8 @@ import java.util.Random;
 @Service
 public class PayService {
 
-    public boolean pay(Card card) {
-        Random random = new Random(card.hashCode());
+    public boolean pay(Card card, double totalCost) {
+        Random random = new Random((long) (card.hashCode() + totalCost));
         return random.nextBoolean();
     }
 }

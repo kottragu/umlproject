@@ -1,26 +1,36 @@
 package com.kottragu.umlproject.ui;
 
-import com.kottragu.umlproject.model.Card;
-import com.kottragu.umlproject.model.Purchase;
-import com.kottragu.umlproject.model.Status;
-import com.kottragu.umlproject.model.Ticket;
+import com.kottragu.umlproject.model.*;
 import com.kottragu.umlproject.service.PurchaseService;
+import com.kottragu.umlproject.service.TicketScheduling;
 import com.kottragu.umlproject.service.TicketService;
+import com.kottragu.umlproject.service.UserService;
+import com.kottragu.umlproject.ui.login.LoginView;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.PWA;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -31,38 +41,40 @@ import java.util.List;
 public class Main extends AppLayout {
     private final TicketService ticketService;
     private final PurchaseService purchaseService;
+    private final UserService userService;
+    private final TicketScheduling ticketScheduling;
+    private User owner;
 
-    Main(TicketService ticketService, PurchaseService purchaseService) {
+    Main(TicketService ticketService, PurchaseService purchaseService, UserService userService, TicketScheduling ticketScheduling) {
+        this.userService = userService;
         this.ticketService = ticketService;
         this.purchaseService = purchaseService;
+        this.ticketScheduling = ticketScheduling;
         DrawerToggle toggle = new DrawerToggle();
 
-
-        Ticket ticket = new Ticket();
-        ticket.setId(1L);
-        ticket.setPrice(1000);
-        Calendar date = new GregorianCalendar();
-        date.set(2021, Calendar.DECEMBER, 27,12,12);
-        ticket.setDate(date);
-        ticket.setStatus(Status.AVAILABLE);
-        ticket.setDirectionFrom("Moscow");
-        ticket.setDirectionTo("Saint Petersburg");
-        ticketService.save(ticket);
-
-        Ticket ticket1 = new Ticket();
-        ticket1.setId(2L);
-        ticket1.setPrice(1000);
-        Calendar date1 = new GregorianCalendar();
-        date1.set(2021, Calendar.DECEMBER, 27,12,12);
-        ticket1.setDate(date1);
-        ticket1.setStatus(Status.AVAILABLE);
-        ticket1.setDirectionFrom("Moscow");
-        ticket1.setDirectionTo("Saint Petersburg");
-        ticketService.save(ticket1);
+        setData();
 
         addToDrawer(createTabs());
         addToNavbar(toggle,createTitle());
+        if (owner.getRole().equals(Role.ADMIN)) {
+            addToNavbar(createAdminButton());
+        }
         addToNavbar(createLogout());
+    }
+
+    private Button createAdminButton() {
+        Button admin = new Button("Add timetable");
+        admin.addClickListener(e -> showAddTimetableModal());
+        admin.getStyle().set("margin-left", "850px");
+        admin.getStyle().set("margin-right", "5px");
+        return admin;
+    }
+
+    private void setData() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        owner = userService.getUserByUsername(userDetails.getUsername());
+        ticketService.setData();
+        purchaseService.setData();
     }
 
     private H1 createTitle() {
@@ -79,6 +91,10 @@ public class Main extends AppLayout {
         Button logout = new Button("Logout");
         logout.getStyle().set("margin-left", "auto");
         logout.getStyle().set("margin-right", "5px");
+        logout.addClickListener(e -> {
+            SecurityContextHolder.clearContext();
+            UI.getCurrent().navigate(LoginView.class);
+        });
         return logout;
     }
 
@@ -106,7 +122,10 @@ public class Main extends AppLayout {
         layout.add(grid);
 
         Button purchaseButton = new Button("Buy");
-        purchaseButton.addClickListener(e -> showCardModal(grid));
+        purchaseButton.addClickListener(e -> {
+            showCardModal(grid, "Available");
+            //grid.setItems(ticketService.getAvailableTickets());
+        });
 
         Button bookButton = new Button("Book");
         bookButton.addClickListener(e -> {
@@ -128,7 +147,7 @@ public class Main extends AppLayout {
         return layout;
     }
 
-    public void showCardModal(Grid<Ticket> grid) {
+    public void showCardModal(Grid<Ticket> grid, String type) {
         Dialog cardModal = new Dialog();
         cardModal.getElement().setAttribute("area-label", "Input card data");
 
@@ -138,6 +157,12 @@ public class Main extends AppLayout {
             if (!event.isOpened() && cardUI.isSubmit()) {
                 if (!purchaseService.createPurchase(grid.getSelectedItems(), cardUI.getData())) {
                     Notification.show("Some tickets have already unavailable");
+                } else {
+                    if (type.equals("Available")) {
+                        grid.setItems(ticketService.getAvailableTickets());
+                    } else if (type.equals("Booked")) {
+                        grid.setItems(ticketService.getBookedTickets());
+                    }
                 }
             }
         });
@@ -182,9 +207,10 @@ public class Main extends AppLayout {
         mainLayout.add(grid);
 
         Button buyButton = new Button("Buy");
-        buyButton.addClickListener(e ->
-            showCardModal(grid)
-        );
+        buyButton.addClickListener(e -> {
+            log.info(String.valueOf(grid.getSelectedItems()));
+            showCardModal(grid, "Booked");
+        });
 
         Button cancelButton = new Button("Cancel booking");
         cancelButton.addClickListener(e -> {
@@ -221,10 +247,75 @@ public class Main extends AppLayout {
         grid.addColumn(Purchase::getDateFrontend).setHeader("Day of buy");
         grid.addColumn(Purchase::getTotalCost).setHeader("Total cost");
         grid.addColumn(Purchase::getTicketsCount).setHeader("Ticket count");
-        grid.setSelectionMode(Grid.SelectionMode.MULTI);
 
         grid.setItems(data);
         return grid;
     }
 
+    private void showAddTimetableModal() {
+        Dialog modal = new Dialog();
+        modal.getElement().setAttribute("aria-label", "Create new timetable");
+        modal.add(createAddTimetableLayout(modal));
+        modal.open();
+    }
+
+    private VerticalLayout createAddTimetableLayout(Dialog modal) {
+        H2 headline = new H2("Create new timetable");
+        TextField from = new TextField("From");
+        TextField to = new TextField("To");
+        NumberField frequency = new NumberField("Frequency");
+        frequency.setMin(1);
+
+        VerticalLayout fieldLayout = new VerticalLayout(from, to, frequency);
+        fieldLayout.setSpacing(false);
+        fieldLayout.setPadding(false);
+        fieldLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+
+
+        //выбор числа
+        DatePicker datePicker = new DatePicker("Start date");
+        datePicker.setAutoOpen(false);
+
+        //выбор времени
+        TimePicker timePicker = new TimePicker();
+        timePicker.setLabel("Start time");
+        timePicker.setStep(Duration.ofSeconds(1));
+        timePicker.setValue(LocalTime.of(15, 45, 8));
+
+        Button cancelButton = new Button("Cancel", e -> modal.close());
+        Button applyButton = new Button("Apply", e -> {
+            /*ticketScheduling.addTimetable(
+                    createTimetableTicket(
+                            from.getValue(),
+                            to.getValue(),
+                            frequency.getValue(),
+                            new GregorianCalendar(datePicker.getValue())
+                    ));*/
+            modal.close();
+        });
+
+
+        HorizontalLayout buttonLayout = new HorizontalLayout(cancelButton,
+                applyButton);
+        buttonLayout
+                .setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+
+
+        VerticalLayout dialogLayout = new VerticalLayout(headline, fieldLayout, datePicker, timePicker, buttonLayout);
+        dialogLayout.setPadding(false);
+        dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+        dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
+
+        return dialogLayout;
+    }
+
+    private TimetableTicket createTimetableTicket(String from, String to, int frequency, Calendar startDay, double price) {
+        TimetableTicket timetableTicket = new TimetableTicket();
+        timetableTicket.setDirectionFrom(from);
+        timetableTicket.setDirectionTo(to);
+        timetableTicket.setFrequency(frequency);
+        timetableTicket.setStartDate(startDay);
+        timetableTicket.setPrice(price);
+        return timetableTicket;
+    }
 }

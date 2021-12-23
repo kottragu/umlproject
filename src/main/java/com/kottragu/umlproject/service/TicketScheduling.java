@@ -4,9 +4,12 @@ import com.kottragu.umlproject.model.Status;
 import com.kottragu.umlproject.model.Ticket;
 import com.kottragu.umlproject.model.TimetableTicket;
 import com.kottragu.umlproject.repo.TicketRepository;
+import com.kottragu.umlproject.repo.TimetableTicketRepo;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -15,14 +18,16 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-@Component
+@Service
+@NoArgsConstructor
 public class TicketScheduling {
-    private List<TimetableTicket> tickets = new ArrayList<>();
-    private Calendar today = new GregorianCalendar();
-    /*private List<TicketRepository> repository;*/
+    private TimetableTicketRepo timetableTicketRepo;
+    private TicketRepository ticketRepository;
 
-    TicketScheduling() {
-       TimetableTicket ticket = new TimetableTicket();
+    //Timetable - scheduling
+
+    TicketScheduling(TimetableTicketRepo timetableTicketRepo, TicketRepository ticketRepository) {
+       /*TimetableTicket ticket = new TimetableTicket();
        ticket.setFrequency(3);
        ticket.setDirectionFrom("Moscow");
        ticket.setDirectionTo("Saint Petersburg");
@@ -30,16 +35,23 @@ public class TicketScheduling {
        Calendar calendar = new GregorianCalendar();
        calendar.set(2021,Calendar.DECEMBER,20, 15, 40);
        ticket.setStartDate(calendar);
-       tickets.add(ticket);
+       tickets.add(ticket);*/
+        this.timetableTicketRepo = timetableTicketRepo;
+        this.ticketRepository = ticketRepository;
+
     }
 
+    public void addTimetable(TimetableTicket ticket) {
+        timetableTicketRepo.save(ticket);
+    }
 
     @Scheduled(cron = "0 15 * * * *")
     public void schedule() {
+        Calendar today = new GregorianCalendar();
         log.info("Schedule started!");
-        for (TimetableTicket ticket: tickets) {
-            if (amplitudeBetweenDates(ticket.getStartDate(), today) % ticket.getFrequency() == 0) {
-                log.info(createTicket(ticket).toString());
+        for (TimetableTicket timeTableTicket: timetableTicketRepo.findAll()) {
+            if (amplitudeBetweenDates(timeTableTicket.getStartDate(), today) % timeTableTicket.getFrequency() == 0) {
+                ticketRepository.save(createTicket(timeTableTicket));
             }
         }
     }
@@ -58,9 +70,9 @@ public class TicketScheduling {
     private Calendar createTodayCalendar(TimetableTicket timetableTicket) {
         Calendar day = new GregorianCalendar();
         day.set(
-                today.get(Calendar.YEAR),
-                today.get(Calendar.MONTH),
-                today.get(Calendar.DAY_OF_MONTH),
+                day.get(Calendar.YEAR),
+                day.get(Calendar.MONTH),
+                day.get(Calendar.DAY_OF_MONTH),
                 timetableTicket.getStartDate().get(Calendar.HOUR_OF_DAY),
                 timetableTicket.getStartDate().get(Calendar.MINUTE)
         );

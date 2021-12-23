@@ -34,7 +34,4 @@ public class UserService {
         return userRepository.findUserByUsername(username);
     }
 
-    public List<User> getUsersByPartUsername(String partOfUsername) {
-        return userRepository.findByPartOfUsername(partOfUsername);
-    }
 }
