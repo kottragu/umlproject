@@ -1,25 +1,20 @@
 package com.kottragu.umlproject.ui;
 
+import com.kottragu.umlproject.model.Card;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.customfield.CustomField;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.PasswordField;
-/*
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 
-@PageTitle("Add Credit Card")
-@Route(value = "card", layout = MainLayout.class)
-public class AddCreditCardView extends Div {
-
+public class CardUI extends Div {
     private TextField cardNumber = new TextField("Credit card number");
     private TextField cardholderName = new TextField("Cardholder name");
     private Select<Integer> month = new Select<>();
@@ -29,19 +24,22 @@ public class AddCreditCardView extends Div {
 
     private Button cancel = new Button("Cancel");
     private Button submit = new Button("Submit");
+    private Boolean isSubmit;
 
-    public AddCreditCardView() {
-        addClassName("add-credit-card-view");
+    public CardUI(Dialog cardModal) {
+        addClassName("hello-world-view");
 
         add(createTitle());
         add(createFormLayout());
         add(createButtonLayout());
 
         cancel.addClickListener(e -> {
-            Notification.show("Not implemented");
+            isSubmit = false;
+            cardModal.close();
         });
         submit.addClickListener(e -> {
-            Notification.show("Not implemented");
+            isSubmit = true;
+            cardModal.close();
         });
     }
 
@@ -96,5 +94,17 @@ public class AddCreditCardView extends Div {
 
     }
 
+    public boolean isSubmit() {
+        return isSubmit;
+    }
+
+    public Card getData() {
+        Card card = new Card();
+        card.setCardNumber(cardNumber.getValue());
+        card.setCardholderName(cardholderName.getValue());
+        card.setCsc(csc.getValue());
+        card.setExpirationMonth(month.getValue());
+        card.setExpirationYear(year.getValue());
+        return card;
+    }
 }
-*/

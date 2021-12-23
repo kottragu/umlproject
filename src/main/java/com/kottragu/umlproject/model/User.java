@@ -1,6 +1,8 @@
 package com.kottragu.umlproject.model;
 
+
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -9,9 +11,13 @@ import javax.persistence.Table;
 
 @Data
 @Entity
-@Table(name = "bought_ticket_info")
-public class BoughtTicketInfo {
+@Table(name = "usr")
+@NoArgsConstructor
+public class User {
     @Id
     @GeneratedValue
     private Long id;
+    private String username;
+    private String password;
+    private Role role;
 }
