@@ -19,7 +19,6 @@ import java.util.Set;
 @NoArgsConstructor
 public class TicketService {
     private TicketRepository ticketRepository;
-    //TODO insert owner
     private User owner;
     private UserRepository userRepository;
 

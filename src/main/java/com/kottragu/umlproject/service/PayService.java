@@ -6,9 +6,11 @@ import java.util.Random;
 
 @Service
 public class PayService {
+    private Card card;
 
     public boolean pay(Card card, double totalCost) {
-        Random random = new Random((long) (card.hashCode() + totalCost));
+        this.card = card;
+        Random random = new Random((long) (this.card.hashCode() + totalCost));
         return random.nextBoolean();
     }
 }
