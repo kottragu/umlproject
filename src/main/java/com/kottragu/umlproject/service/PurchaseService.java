@@ -56,7 +56,7 @@ public class PurchaseService {
     }
 
     public boolean createPurchase(Set<Ticket> tickets, Card card) {
-        if (//payService.pay(card, calculateTotalCost(tickets)) && - опция русской рулетки
+        if (payService.pay(card, calculateTotalCost(tickets)) &&
                 tickets.stream().allMatch(ticket ->
                         ticket.getStatus().equals(Status.AVAILABLE) ||
                         ticket.getStatus().equals(Status.BOOKED) && ticket.getOwnerId().equals(owner.getId()))) {

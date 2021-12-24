@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class TicketScheduling {
     private TimetableTicketRepo timetableTicketRepo;
     private TicketRepository ticketRepository;
-
+    private int createTime = 40;
 
     @Autowired
     TicketScheduling(TimetableTicketRepo timetableTicketRepo, TicketRepository ticketRepository) {
@@ -65,10 +65,12 @@ public class TicketScheduling {
                 timetableTicket.getStartDate().get(Calendar.HOUR_OF_DAY),
                 timetableTicket.getStartDate().get(Calendar.MINUTE)
         );
+        day.add(Calendar.DATE, createTime);
         return day;
     }
 
     private long amplitudeBetweenDates(Calendar start, Calendar end) {
+        end.add(Calendar.DATE, createTime);
         return TimeUnit.MILLISECONDS.toDays(end.getTimeInMillis() - start.getTimeInMillis()) + 1;
     }
 }
