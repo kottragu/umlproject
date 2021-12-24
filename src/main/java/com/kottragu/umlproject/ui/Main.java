@@ -265,40 +265,44 @@ public class Main extends AppLayout {
         TextField to = new TextField("To");
         NumberField frequency = new NumberField("Frequency");
         frequency.setMin(1);
+        NumberField price = new NumberField("Price");
+        price.setMin(1);
 
-        VerticalLayout fieldLayout = new VerticalLayout(from, to, frequency);
+
+        VerticalLayout fieldLayout = new VerticalLayout(from, to);
         fieldLayout.setSpacing(false);
         fieldLayout.setPadding(false);
         fieldLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
 
+        HorizontalLayout horizontalLayout = new HorizontalLayout();
+        horizontalLayout.add(frequency, price);
+        fieldLayout.add(horizontalLayout);
 
         //выбор числа
         DatePicker datePicker = new DatePicker("Start date");
         datePicker.setAutoOpen(false);
-
         //выбор времени
         TimePicker timePicker = new TimePicker();
         timePicker.setLabel("Start time");
         timePicker.setStep(Duration.ofSeconds(1));
-        timePicker.setValue(LocalTime.of(15, 45, 8));
+        timePicker.setValue(LocalTime.of(15, 45));
 
         Button cancelButton = new Button("Cancel", e -> modal.close());
         Button applyButton = new Button("Apply", e -> {
-            /*ticketScheduling.addTimetable(
+            ticketScheduling.addTimetable(
                     createTimetableTicket(
                             from.getValue(),
                             to.getValue(),
-                            frequency.getValue(),
-                            new GregorianCalendar(datePicker.getValue())
-                    ));*/
+                            frequency.getValue().intValue(),
+                            pikersToCalendar(datePicker, timePicker),
+                            price.getValue()
+                    ));
             modal.close();
         });
 
 
-        HorizontalLayout buttonLayout = new HorizontalLayout(cancelButton,
-                applyButton);
-        buttonLayout
-                .setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        HorizontalLayout buttonLayout = new HorizontalLayout(applyButton, cancelButton);
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
 
         VerticalLayout dialogLayout = new VerticalLayout(headline, fieldLayout, datePicker, timePicker, buttonLayout);
@@ -318,4 +322,18 @@ public class Main extends AppLayout {
         timetableTicket.setPrice(price);
         return timetableTicket;
     }
+
+    private Calendar pikersToCalendar(DatePicker datePicker, TimePicker timePicker) {
+        Calendar calendar = new GregorianCalendar();
+        datePicker.getValue();
+        calendar.set(
+                datePicker.getValue().getYear(),
+                datePicker.getValue().getMonthValue()-1,
+                datePicker.getValue().getDayOfMonth(),
+                timePicker.getValue().getHour(),
+                timePicker.getValue().getMinute());
+        return calendar;
+    }
+
+
 }

@@ -34,4 +34,8 @@ public class UserService {
         return userRepository.findUserByUsername(username);
     }
 
+    public boolean isUsernameUnique(String username) {
+        return userRepository.findUserByUsername(username) == null;
+    }
+
 }

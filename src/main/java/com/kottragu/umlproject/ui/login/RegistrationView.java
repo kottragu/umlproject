@@ -32,7 +32,7 @@ public class RegistrationView extends VerticalLayout {
     }
 
     private void save(AbstractLogin.LoginEvent e) {
-        if (userService.getUserByUsername(e.getUsername()) == null) {
+        if (userService.isUsernameUnique(e.getUsername())) {
             user = new User();
             user.setUsername(e.getUsername());
             user.setPassword(e.getPassword());

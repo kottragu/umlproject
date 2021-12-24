@@ -7,6 +7,7 @@ import com.kottragu.umlproject.repo.TicketRepository;
 import com.kottragu.umlproject.repo.TimetableTicketRepo;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -24,18 +25,9 @@ public class TicketScheduling {
     private TimetableTicketRepo timetableTicketRepo;
     private TicketRepository ticketRepository;
 
-    //Timetable - scheduling
 
+    @Autowired
     TicketScheduling(TimetableTicketRepo timetableTicketRepo, TicketRepository ticketRepository) {
-       /*TimetableTicket ticket = new TimetableTicket();
-       ticket.setFrequency(3);
-       ticket.setDirectionFrom("Moscow");
-       ticket.setDirectionTo("Saint Petersburg");
-       ticket.setPrice(15000);
-       Calendar calendar = new GregorianCalendar();
-       calendar.set(2021,Calendar.DECEMBER,20, 15, 40);
-       ticket.setStartDate(calendar);
-       tickets.add(ticket);*/
         this.timetableTicketRepo = timetableTicketRepo;
         this.ticketRepository = ticketRepository;
 
@@ -45,7 +37,7 @@ public class TicketScheduling {
         timetableTicketRepo.save(ticket);
     }
 
-    @Scheduled(cron = "0 15 * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void schedule() {
         Calendar today = new GregorianCalendar();
         log.info("Schedule started!");
